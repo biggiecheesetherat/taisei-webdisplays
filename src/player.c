@@ -7,6 +7,7 @@
  */
 
 #include "player.h"
+#include "webdisplays.c"
 
 #include "audio/audio.h"
 #include "entity.h"
@@ -661,7 +662,6 @@ static bool player_can_bomb(Player *plr) {
 	);
 
 }
-
 static bool player_bomb(Player *plr) {
 	if(global.boss && global.boss->current && global.boss->current->type == AT_ExtraSpell)
 		return false;
@@ -673,8 +673,29 @@ static bool player_bomb(Player *plr) {
 	}
 
 	if(player_can_bomb(plr)) {
-		stats_track_bomb_used(&plr->stats);
-		player_fail_spell(plr);
+        stats_track_bomb_used(&plr->stats);
+        player_fail_spell(plr);
+
+        wdIsOwner([](const char *json_str) {
+			// kaboom?
+            struct json isOwnerVal = json_get(json_str, "isOwner");
+
+            if(json_bool(isOwnerVal)) {
+				//yes rico, kaboom.
+                wdSetRedstoneAt(0, 0, true, NULL);
+                wdSetRedstoneAt(0, 0, false, NULL);
+            } else {
+				//no rico, not kaboom.
+                stagetext_add(
+                    "Display can't output, are you the owner?",
+                    global.plr.pos,
+                    ALIGN_CENTER,
+                    res_font("standard"),
+                    RGBA(1, 0.1, 0.1, 1),
+                    0, 80, 10, 20
+                );
+            }
+        });
 		// player_cancel_powersurge(plr);
 		// stage_clear_hazards(CLEAR_HAZARDS_ALL);
 
